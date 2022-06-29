@@ -16,38 +16,86 @@ class ClientManager {
   }
   login(meta) {
     if (JLCD.arrayItemAlreadyExists(this.clients, "name", meta) == -1) {
-      this.clients.push(new Client(meta, mqttClient));
+      var newClient = new Client(meta, mqttClient);
+      console.log(`New client connected: ${newClient.name}`);
+      this.clients.push(newClient);
+    } else {
+      var pos = JLCD.arrayItemAlreadyExists(this.clients, "name", meta);
+      this.clients.splice(pos, 1);
+      var newClient = new Client(meta, mqttClient);
+      this.removeStartedServices(newClient);
+      this.clients.push(newClient);
+      console.log(`updated client ${newClient.name}`);
     }
 
     this.createNewLookupTable();
-    console.log(this.clients);
   }
+
+  /**
+   * Checks if the new Client already started their services
+   * @param {Client} newClient
+   */
+  removeStartedServices(newClient) {
+    for (const [key, value] of Object.entries(newClient.services)) {
+      if (value.started == false) {
+        if (this.startedServices.indexOf(key) != -1) {
+          console.log("test");
+          var pos = this.startedServices.indexOf(key);
+          this.startedServices.splice(pos, 1);
+        }
+      } else {
+        if (this.startedServices.indexOf(key) == -1) {
+          this.startedServices.push(key);
+        }
+      }
+    }
+
+    Object.keys(newClient.services).forEach((k) => {
+      if (this.startedServices.indexOf(k) != -1) {
+        var pos = this.startedServices.indexOf(k);
+        this.startedServices.splice(pos, 1);
+      }
+    });
+  }
+
+  /**
+   * Starts a service and checks its dependencies and if needed starts them too.
+   * @param {string} service
+   *
+   */
   startService(service) {
     var c = this.serviceLookupTable[service];
+
     if (c == undefined) return;
+    if (this.startedServices.indexOf(service) != -1) return;
+
     var serv = c.services[service];
+    this.startedServices.push(service);
     if (serv.dependencies.length > 0) {
       serv.dependencies.forEach((dep) => {
-        if (this.startedServices.indexOf(dep) == -1) {
-          var depClient = this.serviceLookupTable[dep];
+        var depClient = this.serviceLookupTable[dep];
+        dep = depClient.services[dep];
+        dep.dependOn.push(service);
 
-          dep = depClient.services[dep];
-          dep.dependOn.push(service);
-          this.startService(dep.name);
-        }
+        this.startService(dep.name);
       });
     }
-    this.startedServices.push(service);
+
     c.start(service, this.startedServices);
   }
 
   /**
-   * @todo Implement Dependencies managment to better performance
+   * @see startService function
    * @param {string} service
    */
   stopService(service) {
     var c = this.serviceLookupTable[service];
+    if (c == undefined) return;
+    if (this.startedServices.indexOf(service) == -1) return;
     var serv = c.services[service];
+    var pos = this.startedServices.indexOf(service);
+    this.startedServices.splice(pos, 1);
+    c.stop(service, this.startedServices);
     if (serv.dependencies.length > 0) {
       serv.dependencies.forEach((dep) => {
         if (this.startedServices.indexOf(dep) != -1) {
@@ -61,9 +109,6 @@ class ClientManager {
         }
       });
     }
-    var pos = this.startedServices.indexOf(service);
-    this.startedServices.splice(pos, 1);
-    c.stop(service, this.startedServices);
   }
 
   /**

@@ -11,11 +11,11 @@ class Client {
     this.mqttClient = mqttClient;
   }
   fillServices(services) {
-    var retArr = {};
+    var retObj = {};
     services.forEach((s) => {
-      retArr[s.name] = new Service(s);
+      retObj[s.name] = new Service(s);
     });
-    return retArr;
+    return retObj;
   }
   fillOwnServices(ownServices) {
     var retArr = [];
@@ -39,6 +39,7 @@ class Service {
   constructor(serv) {
     this.name = serv.name;
     this.dependencies = serv.dependencies || [];
+    this.started = serv.started || false;
     this.dependOn = [];
     this.port = serv.port;
   }
