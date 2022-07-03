@@ -5,8 +5,9 @@ const http = require("http");
 const PORT = 1885;
 
 class HttpServer {
-  constructor(clientManager) {
+  constructor(clientManager, serviceManager) {
     this.clientManager = clientManager;
+    this.serviceManager = serviceManager;
     this.options = {};
     this.init();
     this.setServer();
@@ -25,6 +26,14 @@ class HttpServer {
         }
       }
     });
+    for (const [key, value] of Object.entries(this.serviceManager.services)) {
+      if (value.port !== undefined) {
+        if (value.process !== null) {
+          const path = `/${key}`;
+          this.options[path] = `http://localhost:${value.port}`;
+        }
+      }
+    }
   }
   setServer() {
     this.server = http.createServer((req, res) => {
@@ -32,7 +41,6 @@ class HttpServer {
       var isInOption = false;
       for (const [pattern, target] of Object.entries(this.options)) {
         if (pathname === pattern || pathname.startsWith(pattern + "/")) {
-          console.log(target);
           isInOption = true;
           req.url = "";
           this.proxy.web(req, res, { target });

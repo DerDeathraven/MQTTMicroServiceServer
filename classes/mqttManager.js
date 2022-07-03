@@ -1,11 +1,13 @@
 const mqtt = require("mqtt");
 const ClientManager = require("./clientManager");
 const HttpServer = require("./httpServer");
+const ServiceManager = require("./serviceManager");
 
 class MqttManager {
   constructor() {
     this.clientManager = new ClientManager(this);
-    this.httpServer = new HttpServer(this.clientManager);
+    this.serviceManager = new ServiceManager(this);
+    this.httpServer = new HttpServer(this.clientManager, this.serviceManager);
     this.client = mqtt.connect("mqtt://localhost");
     this.client.on("connect", () => {
       console.log("[MQTT] Connected");

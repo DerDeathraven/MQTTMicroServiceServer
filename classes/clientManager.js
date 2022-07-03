@@ -14,6 +14,11 @@ class ClientManager {
     this.clients = [];
     this.startedServices = [];
   }
+
+  /**
+   * adds the new client to the collectiv
+   * @param {object} meta
+   */
   login(meta) {
     if (JLCD.arrayItemAlreadyExists(this.clients, "name", meta) == -1) {
       var newClient = new Client(meta, mqttClient);
