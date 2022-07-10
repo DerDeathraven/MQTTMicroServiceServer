@@ -1,6 +1,7 @@
 const httpProxy = require("http-proxy");
 const url = require("url");
 const http = require("http");
+const { response } = require("express");
 
 const PORT = 1885;
 
@@ -43,7 +44,8 @@ class HttpServer {
         if (pathname === pattern || pathname.startsWith(pattern + "/")) {
           isInOption = true;
           req.url = "";
-          this.proxy.web(req, res, { target });
+          res.writeHead(301, { location: target }).end();
+          //this.proxy.web(req, res, { target });
         }
       }
       if (isInOption == false) {
