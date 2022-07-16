@@ -65,6 +65,7 @@ class HttpServer {
     )) {
     }
   }
+  exposeMeta() {}
 }
 
 module.exports = HttpServer;

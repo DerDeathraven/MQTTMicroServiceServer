@@ -131,6 +131,21 @@ class ClientManager {
 
     this.serviceLookupTable = retObject;
   }
+  exposeMeta() {
+    var retArr = [];
+    this.clients.forEach((client) => {
+      var obj = {
+        name: client.name,
+        ip: client.ip,
+        services: client.services,
+        ownServices: client.ownServices,
+      };
+      retArr.push(obj);
+    });
+    console.log(retArr);
+    var sender = this.mqttManager.client;
+    sender.publish("/server/api/clients", JSON.stringify(retArr));
+  }
 }
 
 module.exports = ClientManager;

@@ -29,6 +29,20 @@ class ServiceManager {
       }
     }
   }
+  exposeMeta() {
+    var sender = this.mqttManager.client;
+
+    var services = [];
+    for (const [key, f] of Object.entries(this.services)) {
+      var obj = {
+        name: f.name,
+        port: f.port,
+        running: f.process === null ? false : true,
+      };
+      services.push(obj);
+    }
+    sender.publish("/server/api/serverServices", JSON.stringify(services));
+  }
 }
 
 class Service {
